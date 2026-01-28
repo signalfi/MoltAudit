@@ -1,0 +1,91 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install jq
+
+      - name: Run unit tests
+        run: make test-unit
+
+      - name: Run integration tests
+        run: make test-integration
+
+      - name: Run output tests
+        run: make test-output
+
+      - name: Run all tests with TAP output
+        run: make test-tap
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on main script
+        run: shellcheck molt-security-audit.sh
+
+      - name: Run ShellCheck on test helper
+        run: shellcheck test/test_helper/common-setup.bash || true
+
+  audit-self-test:
+    name: Self Audit Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run security audit (JSON mode)
+        run: |
+          chmod +x molt-security-audit.sh
+          ./molt-security-audit.sh --json > audit-results.json || true
+          cat audit-results.json
+
+      - name: Validate JSON output
+        run: |
+          jq . audit-results.json > /dev/null
+          echo "JSON output is valid"
+
+      - name: Check for required fields
+        run: |
+          jq -e '.version' audit-results.json
+          jq -e '.timestamp' audit-results.json
+          jq -e '.summary.pass' audit-results.json
+          jq -e '.summary.fail' audit-results.json
+          jq -e '.summary.warn' audit-results.json
+          jq -e '.summary.skip' audit-results.json
+          jq -e '.summary.risk_score' audit-results.json
+          echo "All required fields present"

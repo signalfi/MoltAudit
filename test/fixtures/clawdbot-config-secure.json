@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 18789,
+    "authentication": true
+  },
+  "telegram": {
+    "enabled": true,
+    "token": "REDACTED",
+    "allowedUserIds": [123456789, 987654321]
+  },
+  "discord": {
+    "enabled": true,
+    "token": "REDACTED",
+    "allowedUserIds": ["123456789012345678"]
+  },
+  "browser": {
+    "profile": "/var/lib/clawdbot/chrome-profile",
+    "headless": true
+  },
+  "logging": {
+    "level": "info",
+    "sanitize_tokens": true
+  }
+}

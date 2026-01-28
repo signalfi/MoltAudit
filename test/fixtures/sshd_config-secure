@@ -1,0 +1,24 @@
+# Secure SSH configuration for testing
+# This is a test fixture - not a real sshd_config
+
+Port 22
+Protocol 2
+
+# Authentication
+PasswordAuthentication no
+PermitRootLogin no
+PubkeyAuthentication yes
+ChallengeResponseAuthentication no
+
+# Security
+PermitEmptyPasswords no
+X11Forwarding no
+MaxAuthTries 3
+LoginGraceTime 60
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Banner
+Banner /etc/issue.net

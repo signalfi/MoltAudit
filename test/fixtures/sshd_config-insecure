@@ -1,0 +1,21 @@
+# Insecure SSH configuration for testing
+# This is a test fixture - not a real sshd_config
+
+Port 22
+Protocol 2
+
+# INSECURE: Password auth enabled
+PasswordAuthentication yes
+
+# INSECURE: Root login permitted
+PermitRootLogin yes
+
+PubkeyAuthentication yes
+ChallengeResponseAuthentication yes
+
+# INSECURE: Empty passwords allowed
+PermitEmptyPasswords yes
+
+X11Forwarding yes
+MaxAuthTries 10
+LoginGraceTime 120

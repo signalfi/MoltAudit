@@ -1,0 +1,45 @@
+# Test artifacts
+/tmp/bats-*
+test/.bats-*
+*.bats.swp
+audit-results.json
+
+# Editor files
+*.swp
+*.swo
+*~
+.*.swp
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+
+# Coverage reports
+coverage/
+.coverage
+*.gcov
+*.gcda
+*.gcno
+
+# Build artifacts
+dist/
+build/
+
+# Local configuration
+.env
+.env.local
+*.local
