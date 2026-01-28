@@ -259,7 +259,8 @@ check_firewall() {
 
     # Check iptables (if UFW not active)
     if [[ "$firewall_active" == false ]] && command_exists iptables; then
-        local rules=$(iptables -L -n 2>/dev/null | wc -l)
+        local rules
+        rules=$(iptables -L -n 2>/dev/null | wc -l)
         if [[ $rules -gt 8 ]]; then
             log_pass "iptables" "iptables has rules configured"
             firewall_active=true
@@ -507,7 +508,8 @@ check_docker_security() {
             fi
 
             # Check if running as root
-            local user=$(docker inspect "$container" --format '{{.Config.User}}' 2>/dev/null)
+            local user
+            user=$(docker inspect "$container" --format '{{.Config.User}}' 2>/dev/null)
             if [[ -z "$user" || "$user" == "root" || "$user" == "0" ]]; then
                 log_warn "Docker User" "Container '$container' running as root" 10
             fi
@@ -543,7 +545,8 @@ check_file_permissions() {
 
     # Check .env files (using -print0 for safe handling of filenames with spaces)
     while IFS= read -r -d '' env_file; do
-        local perms=$(stat -c %a "$env_file" 2>/dev/null || stat -f %Lp "$env_file" 2>/dev/null)
+        local perms
+        perms=$(stat -c %a "$env_file" 2>/dev/null || stat -f %Lp "$env_file" 2>/dev/null)
         if is_world_readable "$perms"; then
             log_fail "File Permissions" "$env_file is world-readable (mode: $perms)" 10
             if [[ "$FIX_MODE" == true ]]; then
@@ -557,11 +560,10 @@ check_file_permissions() {
 
     # Check SSH private keys (nullglob handles case where no files match)
     if [[ -d "$HOME/.ssh" ]]; then
-        local found_keys=false
         for key in "$HOME/.ssh/id_"* "$HOME/.ssh/"*_key; do
             if [[ -f "$key" && ! "$key" =~ \.pub$ ]]; then
-                found_keys=true
-                local perms=$(stat -c %a "$key" 2>/dev/null || stat -f %Lp "$key" 2>/dev/null)
+                local perms
+                perms=$(stat -c %a "$key" 2>/dev/null || stat -f %Lp "$key" 2>/dev/null)
                 if [[ "$perms" != "600" && "$perms" != "400" ]]; then
                     log_fail "SSH Key Permissions" "$key has loose permissions (mode: $perms)" 15
                     if [[ "$FIX_MODE" == true ]]; then
@@ -575,22 +577,24 @@ check_file_permissions() {
 
     # Check AWS credentials
     if [[ -f "$HOME/.aws/credentials" ]]; then
-        local perms=$(stat -c %a "$HOME/.aws/credentials" 2>/dev/null || stat -f %Lp "$HOME/.aws/credentials" 2>/dev/null)
+        local perms
+        perms=$(stat -c %a "$HOME/.aws/credentials" 2>/dev/null || stat -f %Lp "$HOME/.aws/credentials" 2>/dev/null)
         if is_world_readable "$perms"; then
-            log_fail "AWS Credentials" "~/.aws/credentials is world-readable" 15
+            log_fail "AWS Credentials" "\$HOME/.aws/credentials is world-readable" 15
             if [[ "$FIX_MODE" == true ]]; then
                 chmod 600 "$HOME/.aws/credentials"
-                echo -e "    ${GREEN}→ Fixed: chmod 600 ~/.aws/credentials${NC}"
+                echo -e "    ${GREEN}→ Fixed: chmod 600 \$HOME/.aws/credentials${NC}"
             fi
         else
-            log_pass "AWS Credentials" "~/.aws/credentials has restricted permissions"
+            log_pass "AWS Credentials" "\$HOME/.aws/credentials has restricted permissions"
         fi
     fi
 
     # Check clawdbot/moltbot config directories
     for config_dir in "$HOME/.clawdbot" "$HOME/.moltbot"; do
         if [[ -d "$config_dir" ]]; then
-            local dir_perms=$(stat -c %a "$config_dir" 2>/dev/null || stat -f %Lp "$config_dir" 2>/dev/null)
+            local dir_perms
+            dir_perms=$(stat -c %a "$config_dir" 2>/dev/null || stat -f %Lp "$config_dir" 2>/dev/null)
             if is_world_accessible "$dir_perms"; then
                 log_fail "Config Directory" "$config_dir is world-accessible" 15
                 if [[ "$FIX_MODE" == true ]]; then
