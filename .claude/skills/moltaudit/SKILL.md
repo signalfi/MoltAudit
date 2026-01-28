@@ -22,6 +22,9 @@ Defensive security audit tool for Moltbot/Clawdbot installations based on [@mrna
 
 # Quiet mode (failures only)
 ./molt-security-audit.sh --quiet
+
+# Deep mode (includes live Gateway probe via native moltbot audit)
+./molt-security-audit.sh --deep
 ```
 
 ## Exit Codes
@@ -44,6 +47,7 @@ Defensive security audit tool for Moltbot/Clawdbot installations based on [@mrna
 8. **File Permissions** - .env, SSH keys, AWS credentials
 9. **Exposed Tokens** - API keys in configs/logs
 10. **Running Processes** - Suspicious or risky processes
+11. **Moltbot Native Audit** - DM/group policies, tool blast radius, browser control, plugins, model hygiene, sandbox config (requires `moltbot` or `clawdbot` CLI)
 
 ## Common Workflows
 

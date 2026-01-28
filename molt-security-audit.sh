@@ -24,7 +24,7 @@ shopt -s nullglob  # Handle glob patterns that match nothing
 # Configuration
 # =============================================================================
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 SCRIPT_NAME="molt-security-audit"
 
 # Colors
@@ -46,6 +46,7 @@ SKIP_COUNT=0
 FIX_MODE=false
 JSON_MODE=false
 QUIET_MODE=false
+DEEP_MODE=false
 
 # Risk score (0-100)
 RISK_SCORE=0
@@ -79,12 +80,14 @@ Options:
   --fix       Attempt to auto-fix safe issues (SSH config, permissions)
   --json      Output results as JSON (for CI/CD integration)
   --quiet     Only show failures and warnings
+  --deep      Forward --deep to moltbot native audit (live Gateway probe)
   --help      Show this help message
 
 Examples:
   ${SCRIPT_NAME}              # Run full audit
   ${SCRIPT_NAME} --fix        # Run audit and fix issues
   ${SCRIPT_NAME} --json       # Output JSON for automation
+  ${SCRIPT_NAME} --deep       # Include live Gateway probe via native audit
 
 Exit Codes:
   0  - All checks passed
@@ -660,6 +663,113 @@ check_running_processes() {
     fi
 }
 
+check_moltbot_native_audit() {
+    log_section "Moltbot Native Security Audit"
+
+    # Detect CLI
+    local cli_cmd=""
+    if command_exists moltbot; then
+        cli_cmd="moltbot"
+    elif command_exists clawdbot; then
+        cli_cmd="clawdbot"
+    else
+        log_skip "Native Audit" "moltbot/clawdbot CLI not installed"
+        return
+    fi
+
+    # Build audit command
+    local -a audit_cmd=("$cli_cmd" "security" "audit")
+    if [[ "$DEEP_MODE" == true ]]; then
+        audit_cmd+=("--deep")
+    fi
+
+    # Run native audit with timeout (portable: prefer gtimeout on macOS)
+    local timeout_cmd=""
+    if command_exists timeout; then
+        timeout_cmd="timeout"
+    elif command_exists gtimeout; then
+        timeout_cmd="gtimeout"
+    fi
+
+    local timeout_secs=30
+    if [[ "$DEEP_MODE" == true ]]; then
+        timeout_secs=60
+    fi
+
+    local audit_output=""
+    if [[ -n "$timeout_cmd" ]]; then
+        audit_output=$($timeout_cmd "$timeout_secs" "${audit_cmd[@]}" 2>&1) || true
+    else
+        audit_output=$("${audit_cmd[@]}" 2>&1) || true
+    fi
+
+    if [[ -z "$audit_output" ]]; then
+        log_warn "Native Audit" "moltbot security audit returned no output" 5
+        return
+    fi
+
+    # Parse output line by line, matching known finding patterns
+    # The native audit uses emoji/text markers for findings
+    local finding_count=0
+    local native_fail=0
+    local native_warn=0
+    local native_pass=0
+
+    while IFS= read -r line; do
+        # Skip empty lines and section headers
+        [[ -z "$line" ]] && continue
+
+        # Strip ANSI escape codes for pattern matching
+        local clean_line
+        clean_line=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
+
+        # Detect findings by common output patterns
+        case "$clean_line" in
+            *"✗"*|*"✘"*|*"❌"*|*"FAIL"*|*"[FAIL]"*)
+                local msg
+                msg=$(echo "$clean_line" | sed 's/^[[:space:]]*[✗✘❌]*//;s/^[[:space:]]*\[FAIL\]//;s/^[[:space:]]*//')
+                if [[ -n "$msg" ]]; then
+                    log_fail "Native: ${msg:0:60}" "$msg" 10
+                    ((native_fail++)) || true
+                    ((finding_count++)) || true
+                fi
+                ;;
+            *"⚠"*|*"⚡"*|*"WARN"*|*"[WARN]"*)
+                local msg
+                msg=$(echo "$clean_line" | sed 's/^[[:space:]]*[⚠⚡]*//;s/^[[:space:]]*\[WARN\]//;s/^[[:space:]]*//')
+                if [[ -n "$msg" ]]; then
+                    log_warn "Native: ${msg:0:60}" "$msg" 5
+                    ((native_warn++)) || true
+                    ((finding_count++)) || true
+                fi
+                ;;
+            *"✓"*|*"✔"*|*"✅"*|*"PASS"*|*"[PASS]"*|*"[OK]"*)
+                local msg
+                msg=$(echo "$clean_line" | sed 's/^[[:space:]]*[✓✔✅]*//;s/^[[:space:]]*\[PASS\]//;s/^[[:space:]]*\[OK\]//;s/^[[:space:]]*//')
+                if [[ -n "$msg" ]]; then
+                    log_pass "Native: ${msg:0:60}" "$msg"
+                    ((native_pass++)) || true
+                    ((finding_count++)) || true
+                fi
+                ;;
+        esac
+    done <<< "$audit_output"
+
+    if [[ $finding_count -eq 0 ]]; then
+        # Couldn't parse structured findings; report raw output for manual review
+        log_warn "Native Audit" "Audit ran but output format not recognized — review manually" 3
+        if [[ "$JSON_MODE" != true && "$QUIET_MODE" != true ]]; then
+            echo ""
+            echo "$audit_output"
+            echo ""
+        fi
+    else
+        if [[ "$JSON_MODE" != true && "$QUIET_MODE" != true ]]; then
+            log_info "Native audit: $native_pass passed, $native_fail failed, $native_warn warnings"
+        fi
+    fi
+}
+
 # =============================================================================
 # Report Generation
 # =============================================================================
@@ -752,6 +862,10 @@ main() {
                 QUIET_MODE=true
                 shift
                 ;;
+            --deep)
+                DEEP_MODE=true
+                shift
+                ;;
             --help|-h)
                 print_help
                 exit 0
@@ -784,6 +898,7 @@ main() {
     check_file_permissions
     check_exposed_tokens
     check_running_processes
+    check_moltbot_native_audit
 
     # Generate report
     generate_report

@@ -93,8 +93,8 @@ teardown() {
 @test "JSON version matches script version" {
     run_moltaudit --json
 
-    # Version should be 1.0.0
-    assert_output --partial '"version": "1.0.0"'
+    # Version should be 1.1.0
+    assert_output --partial '"version": "1.1.0"'
 }
 
 @test "JSON timestamp is ISO 8601 format" {
