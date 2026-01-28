@@ -98,7 +98,7 @@ EOF
 log_pass() {
     local check="$1"
     local message="$2"
-    ((PASS_COUNT++))
+    PASS_COUNT=$((PASS_COUNT + 1))
     if [[ "$JSON_MODE" == true ]]; then
         local esc_check esc_msg
         esc_check=$(json_escape "$check")
@@ -113,8 +113,8 @@ log_fail() {
     local check="$1"
     local message="$2"
     local risk="${3:-10}"
-    ((FAIL_COUNT++))
-    ((RISK_SCORE += risk))
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    RISK_SCORE=$((RISK_SCORE + risk))
     if [[ "$JSON_MODE" == true ]]; then
         local esc_check esc_msg
         esc_check=$(json_escape "$check")
@@ -129,8 +129,8 @@ log_warn() {
     local check="$1"
     local message="$2"
     local risk="${3:-5}"
-    ((WARN_COUNT++))
-    ((RISK_SCORE += risk))
+    WARN_COUNT=$((WARN_COUNT + 1))
+    RISK_SCORE=$((RISK_SCORE + risk))
     if [[ "$JSON_MODE" == true ]]; then
         local esc_check esc_msg
         esc_check=$(json_escape "$check")
@@ -144,7 +144,7 @@ log_warn() {
 log_skip() {
     local check="$1"
     local message="$2"
-    ((SKIP_COUNT++))
+    SKIP_COUNT=$((SKIP_COUNT + 1))
     if [[ "$JSON_MODE" == true ]]; then
         local esc_check esc_msg
         esc_check=$(json_escape "$check")

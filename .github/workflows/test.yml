@@ -88,13 +88,14 @@ jobs:
 
       - name: Check for required fields
         run: |
-          jq -e '.version' audit-results.json > /dev/null
-          jq -e '.timestamp' audit-results.json > /dev/null
-          jq -e '.summary.pass' audit-results.json > /dev/null
-          jq -e '.summary.fail' audit-results.json > /dev/null
-          jq -e '.summary.warn' audit-results.json > /dev/null
-          jq -e '.summary.skip' audit-results.json > /dev/null
-          jq -e '.summary.risk_score' audit-results.json > /dev/null
+          echo "Checking required fields..."
+          jq -e '.version' audit-results.json > /dev/null && echo "  - version: OK"
+          jq -e '.timestamp' audit-results.json > /dev/null && echo "  - timestamp: OK"
+          jq -e '.summary.pass >= 0' audit-results.json > /dev/null && echo "  - summary.pass: OK"
+          jq -e '.summary.fail >= 0' audit-results.json > /dev/null && echo "  - summary.fail: OK"
+          jq -e '.summary.warn >= 0' audit-results.json > /dev/null && echo "  - summary.warn: OK"
+          jq -e '.summary.skip >= 0' audit-results.json > /dev/null && echo "  - summary.skip: OK"
+          jq -e '.summary.risk_score >= 0' audit-results.json > /dev/null && echo "  - summary.risk_score: OK"
           echo "All required fields present"
 
       - name: Display summary
