@@ -259,11 +259,16 @@ check_firewall() {
 
     # Check iptables (if UFW not active)
     if [[ "$firewall_active" == false ]] && command_exists iptables; then
-        local rules
-        rules=$(iptables -L -n 2>/dev/null | wc -l)
-        if [[ $rules -gt 8 ]]; then
-            log_pass "iptables" "iptables has rules configured"
-            firewall_active=true
+        local rules=0
+        local iptables_output=""
+        # Handle iptables failure gracefully (|| true prevents set -e exit)
+        iptables_output=$(iptables -L -n 2>/dev/null) || true
+        if [[ -n "$iptables_output" ]]; then
+            rules=$(echo "$iptables_output" | wc -l)
+            if [[ $rules -gt 8 ]]; then
+                log_pass "iptables" "iptables has rules configured"
+                firewall_active=true
+            fi
         fi
     fi
 

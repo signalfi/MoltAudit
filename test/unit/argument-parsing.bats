@@ -182,11 +182,28 @@ setup() {
 
 @test "multiple flags can be combined" {
     setup_test_home
+
+    # Create basic mocks so script doesn't crash on missing commands
+    create_mock "ufw" 1 ""
+    create_mock "iptables" 1 ""
+    create_mock "firewall-cmd" 1 ""
+    create_mock "systemctl" 1 ""
+    create_mock "docker" 1 ""
+    create_mock "fail2ban-client" 1 ""
+    create_mock "op" 1 ""
+    create_mock "bw" 1 ""
+    create_mock "lpass" 1 ""
     activate_mocks
 
-    # Should not error
+    # Run with combined flags
     run_moltaudit --json --quiet
-    # Exit code depends on checks, but shouldn't crash
+
+    # Script should produce valid JSON output (main success criteria)
+    assert_output --partial "{"
+    assert_output --partial "\"version\":"
+
+    # Exit code should be 0, 1, or 2 (not a crash/signal)
+    # 0 = all pass, 1 = failures, 2 = warnings only
     [[ $status -le 2 ]]
 
     teardown_test_home
