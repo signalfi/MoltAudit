@@ -724,6 +724,7 @@ check_moltbot_native_audit() {
         clean_line=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
 
         # Detect findings by common output patterns
+        # shellcheck disable=SC2221,SC2222
         case "$clean_line" in
             *"✗"*|*"✘"*|*"❌"*|*"FAIL"*|*"[FAIL]"*)
                 local msg
