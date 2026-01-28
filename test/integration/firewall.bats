@@ -139,19 +139,23 @@ MOCK
 # =============================================================================
 
 @test "check_firewall fails when no firewall is active" {
-    # Don't create any firewall mocks
+    # Create mocks that simulate inactive/empty firewalls
+    create_mock "ufw" 0 "Status: inactive"
+    create_mock "iptables" 0 "Chain INPUT (policy ACCEPT)
+Chain FORWARD (policy ACCEPT)
+Chain OUTPUT (policy ACCEPT)"
+    create_mock "firewall-cmd" 1 ""    # firewalld not running
+    create_mock "systemctl" 1 ""       # Service check fails
     activate_mocks
 
     JSON_MODE=false
     QUIET_MODE=false
     FAIL_COUNT=0
 
-    # When no firewall commands exist, should fail
-    run command -v ufw
-    assert_failure
+    check_firewall
 
-    run command -v firewall-cmd
-    assert_failure
+    # Should increment FAIL_COUNT for no active firewall
+    [[ $FAIL_COUNT -gt 0 ]]
 }
 
 @test "check_firewall reports correct failure message" {
