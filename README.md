@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner_v1.png" alt="MoltAudit - Secure Your Shell" width="100%">
+</p>
+
 # moltaudit
 
 [![Tests](https://github.com/signalfi/MoltAudit/actions/workflows/test.yml/badge.svg)](https://github.com/signalfi/MoltAudit/actions/workflows/test.yml)
