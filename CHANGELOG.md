@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Planned
+
+- Configuration file support
+- HTML report generation
+- Slack/Discord notification integration
+
+## [1.1.0] - 2026-01-28
+
+### Added
+
+- Native `moltbot security audit` integration (check #11)
+- `--deep` flag for extended audit including native moltbot checks
+- Portable timeout handling for cross-platform compatibility
+- 12 new integration tests for native audit checks
+- Claude Code CLI skill for running audits
+
+### Changed
+
+- Version bump to 1.1.0
+- Test count increased from 161 to 173 (integration: 56 → 68)
+
 ## [1.0.0] - 2026-01-28
 
 ### Added
@@ -40,12 +63,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Based on [@mrnacknack](https://x.com/mrnacknack)'s security research
 - Defensive tool only - audits YOUR OWN systems
-
-## [Unreleased]
-
-### Planned
-
-- Additional security checks for new attack vectors
-- Configuration file support
-- HTML report generation
-- Slack/Discord notification integration

@@ -488,6 +488,7 @@ Docker:
 □ No host filesystem mounts
 □ Password manager signed out
 □ Credentials file permissions restricted
+□ Native moltbot audit passed (./molt-security-audit.sh --deep)
 ```
 
 ---

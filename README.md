@@ -22,6 +22,7 @@ Based on [@mrnacknack](https://x.com/mrnacknack)'s research: *"10 ways to hack i
 | **File Permissions** | .env files, SSH keys, AWS credentials |
 | **Token Exposure** | Tokens in logs, shell history |
 | **Process Security** | Root processes, exposed tokens |
+| **Moltbot Native Audit** | DM/group policies, tool blast radius, browser control, plugins, model hygiene, sandbox config |
 
 ## Quick Start
 
@@ -52,6 +53,9 @@ chmod +x molt-security-audit.sh
 # Show only failures and warnings
 ./molt-security-audit.sh --quiet
 
+# Deep audit (includes native moltbot checks)
+./molt-security-audit.sh --deep
+
 # Show help
 ./molt-security-audit.sh --help
 ```
@@ -60,7 +64,7 @@ chmod +x molt-security-audit.sh
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║         Moltbot/Clawdbot Security Audit v1.0.0                   ║
+║         Moltbot/Clawdbot Security Audit v1.1.0                   ║
 ║         Defensive Security Scanner                               ║
 ╚══════════════════════════════════════════════════════════════════╝
 
@@ -103,7 +107,7 @@ For CI/CD integration, use `--json` to get machine-readable output:
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "timestamp": "2026-01-28T15:00:00Z",
   "summary": {
     "pass": 8,
@@ -145,6 +149,7 @@ The script works without these, but provides better coverage with:
 - `docker` - Container security checks
 - `fail2ban-client` - Brute force protection check
 - `jq` - JSON validation (testing only)
+- `moltbot` / `clawdbot` - Native audit integration (`--deep` mode)
 
 ## Running Tests
 
@@ -154,12 +159,12 @@ The project includes a comprehensive test suite using [bats-core](https://github
 # Initialize test dependencies (first time only)
 make init-submodules
 
-# Run all 161 tests
+# Run all 173 tests
 make test
 
 # Run specific test categories
 make test-unit         # 53 unit tests
-make test-integration  # 56 integration tests
+make test-integration  # 68 integration tests
 make test-output       # 52 output tests
 
 # TAP format for CI
