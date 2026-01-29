@@ -124,21 +124,31 @@ refactor: simplify permission checking logic
 
 ```
 moltaudit/
-├── molt-security-audit.sh      # Main script
-├── molt-security-vulnerabilities.md  # Vulnerability documentation
-├── Makefile                    # Build/test commands
+├── molt-security-audit.sh           # Main script (20 check functions)
+├── molt-security-vulnerabilities.md # Vulnerability documentation
+├── Makefile                         # Build/test commands
+├── docs/
+│   ├── STIG-MAPPING.md              # DISA STIG / CIS / NIST control mapping
+│   └── ARCHITECTURE.md              # Full inner workings reference
+├── dev/
+│   └── status.md                    # Development status & audit guide
 ├── test/
-│   ├── bats/                   # bats-core (submodule)
+│   ├── bats/                        # bats-core (submodule)
 │   ├── test_helper/
-│   │   ├── bats-support/       # bats-support (submodule)
-│   │   ├── bats-assert/        # bats-assert (submodule)
-│   │   └── common-setup.bash   # Shared test utilities
-│   ├── fixtures/               # Test data files
-│   ├── unit/                   # Unit tests
-│   ├── integration/            # Integration tests
-│   └── output/                 # Output mode tests
+│   │   ├── bats-support/            # bats-support (submodule)
+│   │   ├── bats-assert/             # bats-assert (submodule)
+│   │   └── common-setup.bash        # Shared test utilities
+│   ├── fixtures/                    # Test data files
+│   │   ├── clawdbot-config-*.json   # Bot config fixtures
+│   │   ├── sshd_config-secure       # Core SSH fixture
+│   │   ├── sshd_config-insecure     # Core SSH fixture (negative)
+│   │   ├── sshd_config-stig-secure  # STIG SSH fixture
+│   │   └── sshd_config-stig-weak   # STIG SSH fixture (negative)
+│   ├── unit/                        # 53 unit tests
+│   ├── integration/                 # 164 integration tests
+│   └── output/                      # 52 output tests
 └── .github/
-    └── workflows/              # CI workflows
+    └── workflows/                   # CI workflows
 ```
 
 ## Adding a New Security Check
@@ -169,6 +179,55 @@ check_new_feature
 3. Add tests in `test/integration/new-feature.bats`
 
 4. Document the vulnerability in `molt-security-vulnerabilities.md`
+
+## Adding a STIG Check
+
+STIG checks are gated behind the `--stig` flag and follow stricter contribution requirements:
+
+1. **Gate behind `$STIG_MODE`** — All STIG checks must only execute when `$STIG_MODE == true`:
+
+```bash
+check_my_stig_feature() {
+    log_section "My STIG Feature (DISA STIG / CIS L1)"
+
+    # Skip on unsupported platforms
+    if [[ "$(uname)" == "Darwin" ]]; then
+        log_skip "My Feature" "Linux-only checks (skipped on macOS)"
+        return
+    fi
+
+    if [[ some_condition ]]; then
+        log_pass "My Feature" "Hardened correctly"
+    else
+        log_fail "My Feature" "Not hardened (RHEL-09-XXXXXX)" 15
+    fi
+}
+```
+
+2. **Add to `main()`** inside the STIG block:
+
+```bash
+if [[ "$STIG_MODE" == true ]]; then
+    # ... existing STIG checks ...
+    check_my_stig_feature
+fi
+```
+
+3. **Map to compliance controls** — Add an entry to `docs/STIG-MAPPING.md` with:
+   - DISA STIG ID (e.g., `RHEL-09-XXXXXX`)
+   - CIS Benchmark ID (e.g., `CIS 5.2.X`)
+   - NIST 800-53 control (e.g., `AC-6`)
+
+4. **Use appropriate risk scores per DISA CAT level:**
+   - CAT I (Critical): risk 20-25
+   - CAT II (High): risk 10-15
+   - CAT III (Medium): risk 5-8
+
+5. **Platform detection** — Use `[[ "$(uname)" == "Darwin" ]]` to skip Linux-only checks on macOS.
+
+6. **Add tests** — Create or extend `test/integration/<feature>.bats` with both secure and insecure cases. Use `STIG_MODE=true` in setup.
+
+7. **Add STIG fixtures** if testing config file parsing (see `test/fixtures/sshd_config-stig-secure` and `sshd_config-stig-weak` for examples).
 
 ## Questions?
 
